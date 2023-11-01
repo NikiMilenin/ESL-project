@@ -49,25 +49,22 @@ int main(void)
             my_led_invert(leds[led_it]);
             nrf_delay_ms(SMALL_DELAY);
 
-            if (curr_it % 2 == 0)
-            {
-                if (curr_it == blinky_times[blinky_it])
+            if (curr_it == blinky_times[blinky_it])
                 {
-                    if (blinky_it == 3) 
+                    if (blinky_it == LED_N - 1) 
                     {
                         nrf_delay_ms(VERY_BIG_DELAY);
                         ++led_it;
-                        led_it %= 4;
+                        led_it %= LED_N;
                     }
                     else
                     {
                         nrf_delay_ms(BIG_DELAY);
                     }
                     ++blinky_it;
-                    blinky_it %= 4;
+                    blinky_it %= LED_N;
                     curr_it = 0;
                 }
-            }
             
         }
     }
