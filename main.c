@@ -24,10 +24,6 @@ void my_led_invert(int);
 void my_button_init(int);
 bool button_pressed(int pin_n);
 
-
-/**
- * @brief Function for application main entry.
- */
 int main(void)
 {
 
@@ -39,7 +35,7 @@ int main(void)
     my_button_init(SWITCH_BUTTON_PIN);
 
     int leds[] ={LED1_PIN, LED2_R_PIN, LED2_G_PIN, LED2_B_PIN};
-    int blinky_times[] = {6, 5, 7 ,9};
+    int blinky_times[] = {12, 10, 14, 18};
 
     int led_it = 0;
     int blinky_it = 0;
@@ -50,24 +46,29 @@ int main(void)
         {
             
             curr_it++;
-            blink(leds[led_it]);
+            my_led_invert(leds[led_it]);
+            nrf_delay_ms(SMALL_DELAY);
 
-            if (curr_it == blinky_times[blinky_it])
+            if (curr_it % 2 == 0)
             {
-                if (blinky_it == 3) 
+                if (curr_it == blinky_times[blinky_it])
                 {
-                    nrf_delay_ms(VERY_BIG_DELAY);
-                    ++led_it;
-                    led_it %= 4;
+                    if (blinky_it == 3) 
+                    {
+                        nrf_delay_ms(VERY_BIG_DELAY);
+                        ++led_it;
+                        led_it %= 4;
+                    }
+                    else
+                    {
+                        nrf_delay_ms(BIG_DELAY);
+                    }
+                    ++blinky_it;
+                    blinky_it %= 4;
+                    curr_it = 0;
                 }
-                else
-                {
-                    nrf_delay_ms(BIG_DELAY);
-                }
-                ++blinky_it;
-                blinky_it %= 4;
-                curr_it = 0;
             }
+            
         }
     }
 }
