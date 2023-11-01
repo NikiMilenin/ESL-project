@@ -13,10 +13,12 @@
 #define LED2_G_PIN NRF_GPIO_PIN_MAP(1, 9)
 #define LED2_B_PIN NRF_GPIO_PIN_MAP(0, 12)
 
+#define SWITCH_BUTTON_PIN NRF_GPIO_PIN_MAP(1, 6)
+
 #define LED_N 4
 
-void blink(int);
 void blink_n_times(int, int);
+void my_led_init(int);
 void my_led_invert(int);
 
 
@@ -25,11 +27,14 @@ void my_led_invert(int);
  */
 int main(void)
 {
-    /* Configure board. */
-    bsp_board_init(BSP_INIT_LEDS);
+
+    my_led_init(LED1_PIN);
+    my_led_init(LED2_R_PIN);
+    my_led_init(LED2_G_PIN);
+    my_led_init(LED2_B_PIN);
+
     int leds[] ={LED1_PIN, LED2_R_PIN, LED2_G_PIN, LED2_B_PIN};
 
-    /* Toggle LEDs. */
     while (true)
     {
         for (int i = 0; i < LED_N; i++)
@@ -45,25 +50,25 @@ int main(void)
     }
 }
 
-void blink(int led_id)
-{
-    my_led_invert(led_id);
-    nrf_delay_ms(SMALL_DELAY);
-    my_led_invert(led_id);
-    nrf_delay_ms(SMALL_DELAY);
-}
-
 void blink_n_times(int led_id, int n)
 {
     for (int j = 0; j < n; j++) {
-        blink(led_id);
+        my_led_invert(led_id);
+        nrf_delay_ms(SMALL_DELAY);
+        my_led_invert(led_id);
+        nrf_delay_ms(SMALL_DELAY);
     }
     nrf_delay_ms(BIG_DELAY);
 }
 
-void my_led_invert(int pin_n)
+void my_led_init(int pin_n)
 {
     nrf_gpio_cfg_output(pin_n);
+    nrf_gpio_pin_write(pin_n, 1);
+}
+
+void my_led_invert(int pin_n)
+{
     int prev_state = nrf_gpio_pin_out_read(pin_n);
     if (prev_state == 0)
     {
@@ -74,3 +79,8 @@ void my_led_invert(int pin_n)
         nrf_gpio_pin_write(pin_n, 0);
     }
 }
+/**
+bool switch_button_pressed()
+{
+    nrf_gpio_cfg_input(SWITCH_BUTTON_PIN, NRF_GPIO_PIN_PULLUP);
+}*/
