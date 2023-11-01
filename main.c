@@ -34,8 +34,8 @@ int main(void)
 
     my_button_init(SWITCH_BUTTON_PIN);
 
-    int leds[] ={LED1_PIN, LED2_R_PIN, LED2_G_PIN, LED2_B_PIN};
-    int blinky_times[] = {12, 10, 14, 18};
+    int leds[] ={LED1_PIN, LED2_R_PIN, LED2_G_PIN, LED2_B_PIN}; // array of led pin's id
+    int blinky_times[] = {6*2, 5*2, 7*2, 9*2}; // n * 2 to on and off led in each iteration
 
     int led_it = 0;
     int blinky_it = 0;
