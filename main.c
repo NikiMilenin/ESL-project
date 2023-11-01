@@ -17,9 +17,12 @@
 
 #define LED_N 4
 
+void blink(int);
 void blink_n_times(int, int);
 void my_led_init(int);
 void my_led_invert(int);
+void my_button_init(int);
+bool button_pressed(int pin_n);
 
 
 /**
@@ -33,30 +36,54 @@ int main(void)
     my_led_init(LED2_G_PIN);
     my_led_init(LED2_B_PIN);
 
-    int leds[] ={LED1_PIN, LED2_R_PIN, LED2_G_PIN, LED2_B_PIN};
+    my_button_init(SWITCH_BUTTON_PIN);
 
+    int leds[] ={LED1_PIN, LED2_R_PIN, LED2_G_PIN, LED2_B_PIN};
+    int blinky_times[] = {6, 5, 7 ,9};
+
+    int led_it = 0;
+    int blinky_it = 0;
+    int curr_it = 0;
     while (true)
     {
-        for (int i = 0; i < LED_N; i++)
+        while(button_pressed(SWITCH_BUTTON_PIN))
         {
-            int led_id = leds[i];
+            
+            curr_it++;
+            blink(leds[led_it]);
 
-            blink_n_times(led_id, 6);
-            blink_n_times(led_id, 5);
-            blink_n_times(led_id, 7);
-            blink_n_times(led_id, 9);
-            nrf_delay_ms(VERY_BIG_DELAY);
+            if (curr_it == blinky_times[blinky_it])
+            {
+                if (blinky_it == 3) 
+                {
+                    nrf_delay_ms(VERY_BIG_DELAY);
+                    ++led_it;
+                    led_it %= 4;
+                }
+                else
+                {
+                    nrf_delay_ms(BIG_DELAY);
+                }
+                ++blinky_it;
+                blinky_it %= 4;
+                curr_it = 0;
+            }
         }
     }
+}
+
+void blink(int led_id)
+{
+    my_led_invert(led_id);
+    nrf_delay_ms(SMALL_DELAY);
+    my_led_invert(led_id);
+    nrf_delay_ms(SMALL_DELAY); 
 }
 
 void blink_n_times(int led_id, int n)
 {
     for (int j = 0; j < n; j++) {
-        my_led_invert(led_id);
-        nrf_delay_ms(SMALL_DELAY);
-        my_led_invert(led_id);
-        nrf_delay_ms(SMALL_DELAY);
+        blink(led_id);
     }
     nrf_delay_ms(BIG_DELAY);
 }
@@ -79,8 +106,13 @@ void my_led_invert(int pin_n)
         nrf_gpio_pin_write(pin_n, 0);
     }
 }
-/**
-bool switch_button_pressed()
+
+void my_button_init(int pin_n)
 {
-    nrf_gpio_cfg_input(SWITCH_BUTTON_PIN, NRF_GPIO_PIN_PULLUP);
-}*/
+    nrf_gpio_cfg_input(pin_n, NRF_GPIO_PIN_PULLUP);
+}
+
+bool button_pressed(int pin_n)
+{
+    return nrf_gpio_pin_read(pin_n) == 0;
+}
