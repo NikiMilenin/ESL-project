@@ -1,18 +1,46 @@
 #include <stdbool.h>
 #include <stdint.h>
+
+#include "nordic_common.h"
 #include "boards.h"
-#include "led.h"
-#include "button.h"
+
+#include "nrf_log.h"
+#include "nrf_log_ctrl.h"
+#include "nrf_log_default_backends.h"
+
+#include "nrf_log_backend_usb.h"
+
+#include "app_usbd.h"
+#include "app_usbd_serial_num.h"
+
+#include "boards.h"
+#include "buttons.h"
+#include "leds.h"
+
+#include "nrfx_gpiote.h"
 
 #define LED_N 4
 #define PWM_FREQUENCY 1000
 
 #define DEVICE_ID 6579
+volatile bool switched;
 
-void button_hold_smooth_blinky();
+void GPIOTE_EventHandler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action )
+{
+    if (pin == SWITCH_BUTTON_PIN && action == NRF_GPIOTE_POLARITY_HITOLO )
+    {
+        NRF_LOG_INFO("Button pressed");
+        switched = switched == 0 ? 1 : 0;
+    }
+}
 
 int main(void)
 {
+    ret_code_t ret = NRF_LOG_INIT(NULL);
+    APP_ERROR_CHECK(ret);
+
+    NRF_LOG_DEFAULT_BACKENDS_INIT();
+
     led_init(LED1_PIN);
     led_init(LED2_R_PIN);
     led_init(LED2_G_PIN);
@@ -21,11 +49,12 @@ int main(void)
     button_init(SWITCH_BUTTON_PIN);
 
     nrfx_systick_init();
-    button_hold_smooth_blinky();
-}
-
-void button_hold_smooth_blinky()
-{
+    
+    nrfx_gpiote_init();
+    nrfx_gpiote_in_config_t config = NRFX_GPIOTE_CONFIG_IN_SENSE_HITOLO(1);
+    config.pull = NRF_GPIO_PIN_PULLUP;
+    nrfx_gpiote_in_init(SWITCH_BUTTON_PIN, &config, GPIOTE_EventHandler);
+    nrfx_gpiote_in_event_enable(SWITCH_BUTTON_PIN, true);
 
     int leds[] ={LED1_PIN, LED2_R_PIN, LED2_G_PIN, LED2_B_PIN};
     int blinky_times[] = {
@@ -45,11 +74,10 @@ void button_hold_smooth_blinky()
 
     while (true)
     {
-        while(button_pressed(SWITCH_BUTTON_PIN))
+        while(switched)
         {
             percent += it;
             set_led_duty_cycle(percent, period, leds[led_it]);
-            
             nrf_delay_ms(1);
 
             if (percent == 100)
@@ -81,5 +109,7 @@ void button_hold_smooth_blinky()
         }
         set_led_duty_cycle(percent, period, leds[led_it]);
         nrf_delay_ms(1);
+        LOG_BACKEND_USB_PROCESS();
+        NRF_LOG_PROCESS();
     }
 }
