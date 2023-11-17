@@ -4,35 +4,16 @@
 #include "nordic_common.h"
 #include "boards.h"
 
-#include "nrf_log.h"
-#include "nrf_log_ctrl.h"
-#include "nrf_log_default_backends.h"
-
-#include "nrf_log_backend_usb.h"
-
-#include "app_usbd.h"
-#include "app_usbd_serial_num.h"
-
 #include "boards.h"
-#include "buttons.h"
+#include "button.h"
 #include "leds.h"
-
-#include "nrfx_gpiote.h"
 
 #define LED_N 4
 #define PWM_FREQUENCY 1000
 
 #define DEVICE_ID 6579
-volatile bool switched;
 
-void GPIOTE_EventHandler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action )
-{
-    if (pin == SWITCH_BUTTON_PIN && action == NRF_GPIOTE_POLARITY_HITOLO )
-    {
-        NRF_LOG_INFO("Button pressed");
-        switched = switched == 0 ? 1 : 0;
-    }
-}
+extern volatile bool BUTTON_DOUBLE_CLICKED;
 
 int main(void)
 {
@@ -45,16 +26,9 @@ int main(void)
     led_init(LED2_R_PIN);
     led_init(LED2_G_PIN);
     led_init(LED2_B_PIN);
-
-    button_init(SWITCH_BUTTON_PIN);
-
     nrfx_systick_init();
     
-    nrfx_gpiote_init();
-    nrfx_gpiote_in_config_t config = NRFX_GPIOTE_CONFIG_IN_SENSE_HITOLO(1);
-    config.pull = NRF_GPIO_PIN_PULLUP;
-    nrfx_gpiote_in_init(SWITCH_BUTTON_PIN, &config, GPIOTE_EventHandler);
-    nrfx_gpiote_in_event_enable(SWITCH_BUTTON_PIN, true);
+    double_click_init();
 
     int leds[] ={LED1_PIN, LED2_R_PIN, LED2_G_PIN, LED2_B_PIN};
     int blinky_times[] = {
@@ -74,7 +48,7 @@ int main(void)
 
     while (true)
     {
-        while(switched)
+        while(BUTTON_DOUBLE_CLICKED)
         {
             percent += it;
             set_led_duty_cycle(percent, period, leds[led_it]);
