@@ -4,6 +4,13 @@
 #include "nordic_common.h"
 #include "boards.h"
 
+#include "nrf_log.h"
+#include "nrf_log_ctrl.h"
+#include "nrf_log_default_backends.h"
+#include "nrf_log_backend_usb.h"
+#include "app_usbd.h"
+#include "app_usbd_serial_num.h"
+
 #include "boards.h"
 #include "button.h"
 #include "leds.h"
@@ -19,15 +26,9 @@ int main(void)
 {
     ret_code_t ret = NRF_LOG_INIT(NULL);
     APP_ERROR_CHECK(ret);
-
     NRF_LOG_DEFAULT_BACKENDS_INIT();
 
-    led_init(LED1_PIN);
-    led_init(LED2_R_PIN);
-    led_init(LED2_G_PIN);
-    led_init(LED2_B_PIN);
-    nrfx_systick_init();
-    
+    smooth_blink_init();
     double_click_init();
 
     int leds[] ={LED1_PIN, LED2_R_PIN, LED2_G_PIN, LED2_B_PIN};

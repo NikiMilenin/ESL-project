@@ -23,5 +23,6 @@ void led_init(int);
 void led_invert(int);
 void smooth_blink(int, int);
 void set_led_duty_cycle(short, uint32_t, int);
+void smooth_blink_init();
 
 #endif

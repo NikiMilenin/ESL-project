@@ -62,7 +62,6 @@ void smooth_blink(int pin_n, int freq)
 void set_led_duty_cycle(short percent, uint32_t period, int pin_n)
 {
     if (percent < 1 || percent > 100) return;
-    //nrfx_systick_state_t p_state;
 
     uint32_t time_on = period * percent / 100;
     uint32_t time_off = period - time_on;
@@ -71,4 +70,13 @@ void set_led_duty_cycle(short percent, uint32_t period, int pin_n)
     nrfx_systick_delay_us(time_on);
     led_invert(pin_n);
     nrfx_systick_delay_us(time_off);
+}
+
+void smooth_blink_init()
+{
+    led_init(LED1_PIN);
+    led_init(LED2_R_PIN);
+    led_init(LED2_G_PIN);
+    led_init(LED2_B_PIN);
+    nrfx_systick_init();
 }
