@@ -1,55 +1,70 @@
 #include <stdbool.h>
 #include <stdint.h>
-#include "nrf_delay.h"
+
+#include "nordic_common.h"
 #include "boards.h"
-#include "../esl-nsdk/modules/nrfx/hal/nrf_gpio.h"
 
-#define SMALL_DELAY 400
-#define BIG_DELAY 1000
-#define VERY_BIG_DELAY 2000
+#include "nrf_log.h"
+#include "nrf_log_ctrl.h"
+#include "nrf_log_default_backends.h"
+#include "nrf_log_backend_usb.h"
+#include "app_usbd.h"
+#include "app_usbd_serial_num.h"
 
-#define LED1_PIN NRF_GPIO_PIN_MAP(0, 6)
-#define LED2_R_PIN NRF_GPIO_PIN_MAP(0, 8)
-#define LED2_G_PIN NRF_GPIO_PIN_MAP(1, 9)
-#define LED2_B_PIN NRF_GPIO_PIN_MAP(0, 12)
-
-#define SWITCH_BUTTON_PIN NRF_GPIO_PIN_MAP(1, 6)
+#include "boards.h"
+#include "button.h"
+#include "leds.h"
 
 #define LED_N 4
+#define PWM_FREQUENCY 1000
 
-void blink(int);
-void blink_n_times(int, int);
-void my_led_init(int);
-void my_led_invert(int);
-void my_button_init(int);
-bool button_pressed(int pin_n);
+#define DEVICE_ID 6579
+
+extern volatile bool BUTTON_DOUBLE_CLICKED;
 
 int main(void)
 {
+    ret_code_t ret = NRF_LOG_INIT(NULL);
+    APP_ERROR_CHECK(ret);
+    NRF_LOG_DEFAULT_BACKENDS_INIT();
 
-    my_led_init(LED1_PIN);
-    my_led_init(LED2_R_PIN);
-    my_led_init(LED2_G_PIN);
-    my_led_init(LED2_B_PIN);
+    smooth_blink_init();
+    double_click_init();
 
-    my_button_init(SWITCH_BUTTON_PIN);
-
-    int leds[] ={LED1_PIN, LED2_R_PIN, LED2_G_PIN, LED2_B_PIN}; // array of led pin's id
-    int blinky_times[] = {6*2, 5*2, 7*2, 9*2}; // n * 2 to on and off led in each iteration
+    int leds[] ={LED1_PIN, LED2_R_PIN, LED2_G_PIN, LED2_B_PIN};
+    int blinky_times[] = {
+                        DEVICE_ID / 1000, 
+                        DEVICE_ID % 1000 / 100, 
+                        DEVICE_ID % 100 / 10, 
+                        DEVICE_ID % 10
+                        }; 
 
     int led_it = 0;
     int blinky_it = 0;
     int curr_it = 0;
+    short percent = 0;
+    signed char it = 1;
+
+    uint32_t period = pow(10, 6) / PWM_FREQUENCY;
+
     while (true)
     {
-        while(button_pressed(SWITCH_BUTTON_PIN))
+        while(BUTTON_DOUBLE_CLICKED)
         {
-            
-            curr_it++;
-            my_led_invert(leds[led_it]);
-            nrf_delay_ms(SMALL_DELAY);
+            percent += it;
+            set_led_duty_cycle(percent, period, leds[led_it]);
+            nrf_delay_ms(1);
 
-            if (curr_it == blinky_times[blinky_it])
+            if (percent == 100)
+            {
+                it = -1;
+            }
+            else if (percent == 0)
+            {
+                ++curr_it;
+                nrf_delay_ms(SMALL_DELAY);
+                it = 1;
+                if (curr_it == blinky_times[blinky_it])
                 {
                     if (blinky_it == LED_N - 1) 
                     {
@@ -65,52 +80,11 @@ int main(void)
                     blinky_it %= LED_N;
                     curr_it = 0;
                 }
-            
+            }  
         }
+        set_led_duty_cycle(percent, period, leds[led_it]);
+        nrf_delay_ms(1);
+        LOG_BACKEND_USB_PROCESS();
+        NRF_LOG_PROCESS();
     }
-}
-
-void blink(int led_id)
-{
-    my_led_invert(led_id);
-    nrf_delay_ms(SMALL_DELAY);
-    my_led_invert(led_id);
-    nrf_delay_ms(SMALL_DELAY); 
-}
-
-void blink_n_times(int led_id, int n)
-{
-    for (int j = 0; j < n; j++) {
-        blink(led_id);
-    }
-    nrf_delay_ms(BIG_DELAY);
-}
-
-void my_led_init(int pin_n)
-{
-    nrf_gpio_cfg_output(pin_n);
-    nrf_gpio_pin_write(pin_n, 1);
-}
-
-void my_led_invert(int pin_n)
-{
-    int prev_state = nrf_gpio_pin_out_read(pin_n);
-    if (prev_state == 0)
-    {
-        nrf_gpio_pin_write(pin_n, 1);
-    }
-    else
-    {
-        nrf_gpio_pin_write(pin_n, 0);
-    }
-}
-
-void my_button_init(int pin_n)
-{
-    nrf_gpio_cfg_input(pin_n, NRF_GPIO_PIN_PULLUP);
-}
-
-bool button_pressed(int pin_n)
-{
-    return nrf_gpio_pin_read(pin_n) == 0;
 }
