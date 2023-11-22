@@ -20,7 +20,8 @@
 
 #define DEVICE_ID 6579
 
-extern volatile bool BUTTON_DOUBLE_CLICKED;
+extern volatile bool g_button_double_clicked;
+extern volatile bool g_button_holded;
 
 int main(void)
 {
@@ -29,7 +30,7 @@ int main(void)
     NRF_LOG_DEFAULT_BACKENDS_INIT();
 
     smooth_blink_init();
-    double_click_init();
+    button_init();
 
     int leds[] ={LED1_PIN, LED2_R_PIN, LED2_G_PIN, LED2_B_PIN};
     int blinky_times[] = {
@@ -47,9 +48,11 @@ int main(void)
 
     uint32_t period = pow(10, 6) / PWM_FREQUENCY;
 
+
+
     while (true)
     {
-        while(BUTTON_DOUBLE_CLICKED)
+        while(g_button_double_clicked)
         {
             percent += it;
             set_led_duty_cycle(percent, period, leds[led_it]);
@@ -66,21 +69,15 @@ int main(void)
                 it = 1;
                 if (curr_it == blinky_times[blinky_it])
                 {
-                    if (blinky_it == LED_N - 1) 
-                    {
-                        nrf_delay_ms(VERY_BIG_DELAY);
-                        ++led_it;
-                        led_it %= LED_N;
-                    }
-                    else
-                    {
-                        nrf_delay_ms(BIG_DELAY);
-                    }
+                    nrf_delay_ms(BIG_DELAY);
                     ++blinky_it;
                     blinky_it %= LED_N;
                     curr_it = 0;
+                    ++led_it;
                 }
-            }  
+            }
+            LOG_BACKEND_USB_PROCESS();
+            NRF_LOG_PROCESS();  
         }
         set_led_duty_cycle(percent, period, leds[led_it]);
         nrf_delay_ms(1);
