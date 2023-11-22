@@ -74,6 +74,7 @@ int main(void)
                     blinky_it %= LED_N;
                     curr_it = 0;
                     ++led_it;
+                    led_it %= LED_N;
                 }
             }
             LOG_BACKEND_USB_PROCESS();
