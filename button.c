@@ -9,8 +9,10 @@ APP_TIMER_DEF(hold_button_timer);
 
 void GPIOTEDoubleClick_EventHandler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
-    app_timer_stop(debouncing_timer);
-    app_timer_start(debouncing_timer, APP_TIMER_TICKS(DEBOUNCING_DELAY), 0);
+    if (pin == SWITCH_BUTTON_PIN && action == NRF_GPIOTE_POLARITY_HITOLO) {
+        app_timer_stop(debouncing_timer);
+        app_timer_start(debouncing_timer, APP_TIMER_TICKS(DEBOUNCING_DELAY), 0);
+    } 
 }
 
 void doubleClickTimer_EventHandler(void* ptr)
@@ -20,8 +22,9 @@ void doubleClickTimer_EventHandler(void* ptr)
 
 void debouncingTimer_EventHandler(void* p)
 {
-    NRF_LOG_INFO("BUTTON PRESSED");
+    
     ++clicks;
+    NRF_LOG_INFO("BUTTON PRESSED %d", clicks);
     if (clicks == 2)
     {
         NRF_LOG_INFO("BUTTON DOUBLE CKICLED");
@@ -45,9 +48,9 @@ void holdButtonTimer_EventHandler(void* ptr)
 
 void button_init()
 {
-    nrf_gpio_cfg_input(SWITCH_BUTTON_PIN, NRF_GPIO_PIN_PULLUP);
+    //nrf_gpio_cfg_input(SWITCH_BUTTON_PIN, NRF_GPIO_PIN_PULLUP);
     nrfx_gpiote_init();
-    nrfx_gpiote_in_config_t config = NRFX_GPIOTE_CONFIG_IN_SENSE_HITOLO(0);
+    nrfx_gpiote_in_config_t config = NRFX_GPIOTE_CONFIG_IN_SENSE_HITOLO(1);
     config.pull = NRF_GPIO_PIN_PULLUP;
     nrfx_gpiote_in_init(SWITCH_BUTTON_PIN, &config, GPIOTEDoubleClick_EventHandler);
     nrfx_gpiote_in_event_enable(SWITCH_BUTTON_PIN, true);

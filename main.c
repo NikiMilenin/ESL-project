@@ -48,8 +48,6 @@ int main(void)
 
     uint32_t period = pow(10, 6) / PWM_FREQUENCY;
 
-
-
     while (true)
     {
         while(g_button_double_clicked)
