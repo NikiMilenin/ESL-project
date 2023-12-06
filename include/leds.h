@@ -1,11 +1,19 @@
 #ifndef LED_H
 #define LED_H
 
+#include "nrf_log.h"
+#include "nrf_log_ctrl.h"
+#include "nrf_log_default_backends.h"
+#include "nrf_log_backend_usb.h"
+#include "app_usbd.h"
+#include "app_usbd_serial_num.h"
+
 #include <math.h>
 #include <stdint.h>
 #include "nrf_gpio.h"
 #include "nrf_delay.h"
 #include "nrfx_systick.h"
+#include "nrfx_pwm.h"
 
 #define SMALL_DELAY 400
 #define BIG_DELAY 1000
@@ -17,12 +25,6 @@
 #define LED2_B_PIN NRF_GPIO_PIN_MAP(0, 12)
 #define DEFAULT_LED_PWM_FREQUENCY 1000
 
-void blink(int);
-void blink_n_times(int, int);
-void led_init(int);
-void led_invert(int);
-void smooth_blink(int, int);
-void set_led_duty_cycle(short, uint32_t, int);
-void smooth_blink_init();
+void smooth_bl();
 
 #endif

@@ -14,9 +14,9 @@
 #include "app_timer.h"
 #include "drv_rtc.h"
 
-#define DEBOUNCING_DELAY 250
-#define HOLD_BUTTON_TIME 750
-#define DOUBLE_CLICK_TIME 1250
+#define DEBOUNCING_DELAY 200
+#define HOLD_BUTTON_TIME 500
+#define DOUBLE_CLICK_TIME 1000
 
 #define SWITCH_BUTTON_PIN NRF_GPIO_PIN_MAP(1, 6)
 void button_init();
