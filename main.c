@@ -20,9 +20,6 @@
 
 #define DEVICE_ID 6579
 
-extern volatile bool g_button_double_clicked;
-extern volatile bool g_button_holded;
-
 int main(void)
 {
     ret_code_t ret = NRF_LOG_INIT(NULL);
@@ -30,6 +27,7 @@ int main(void)
     NRF_LOG_DEFAULT_BACKENDS_INIT();
 
     button_init();
+    led_init();
 
     while (true)
     {

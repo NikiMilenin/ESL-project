@@ -23,8 +23,15 @@
 #define LED2_R_PIN NRF_GPIO_PIN_MAP(0, 8)
 #define LED2_G_PIN NRF_GPIO_PIN_MAP(1, 9)
 #define LED2_B_PIN NRF_GPIO_PIN_MAP(0, 12)
-#define DEFAULT_LED_PWM_FREQUENCY 1000
+#define PWM_STATE_TOP_VALUE 10000
+#define PWM_RGB_TOP_VALUE 255
 
-void smooth_bl();
+#define HSV_SCALER 100
+#define HSV_IT 2
+
+void led_init();
+void check_state();
+void correct_rgb();
+void correct_hsv();
 
 #endif
