@@ -15,6 +15,8 @@
 #include "nrfx_systick.h"
 #include "nrfx_pwm.h"
 
+#define DEVICE_ID 6579
+
 #define SMALL_DELAY 400
 #define BIG_DELAY 1000
 #define VERY_BIG_DELAY 2000

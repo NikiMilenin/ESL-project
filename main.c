@@ -18,7 +18,6 @@
 #define LED_N 4
 #define PWM_FREQUENCY 1000
 
-#define DEVICE_ID 6579
 
 int main(void)
 {
