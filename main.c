@@ -31,6 +31,7 @@ int main(void)
 
     while (true)
     {
+        __WFE();
         LOG_BACKEND_USB_PROCESS();
         NRF_LOG_PROCESS();
     }

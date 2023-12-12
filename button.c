@@ -9,8 +9,11 @@ APP_TIMER_DEF(hold_button_timer);
 
 void GPIOTEDoubleClick_EventHandler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
-    app_timer_stop(debouncing_timer);
-    app_timer_start(debouncing_timer, APP_TIMER_TICKS(DEBOUNCING_DELAY), 0);
+    if (nrf_gpio_pin_read(SWITCH_BUTTON_PIN) == 0) {
+        app_timer_stop(debouncing_timer);
+        app_timer_start(debouncing_timer, APP_TIMER_TICKS(DEBOUNCING_DELAY), 0);
+    }
+    app_timer_start(hold_button_timer, APP_TIMER_TICKS(HOLD_BUTTON_DEB_TIME), 0);  
 }
 
 void doubleClickTimer_EventHandler(void* ptr)
@@ -47,7 +50,9 @@ void holdButtonTimer_EventHandler(void* ptr)
     if (nrf_gpio_pin_read(SWITCH_BUTTON_PIN) == 0) {
         NRF_LOG_INFO("BUTTON HOLDED");
         clicks = 0;
-        g_button_holded = g_button_holded == 1? 0 : 1;
+        g_button_holded = 1;
+    } else {
+        g_button_holded = 0;
     }
 }
 

@@ -14,7 +14,8 @@
 #include "app_timer.h"
 #include "drv_rtc.h"
 
-#define DEBOUNCING_DELAY 200
+#define HOLD_BUTTON_DEB_TIME 200
+#define DEBOUNCING_DELAY 175
 #define HOLD_BUTTON_TIME 500
 #define DOUBLE_CLICK_TIME 1000
 
