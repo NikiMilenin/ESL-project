@@ -3,7 +3,7 @@
 extern volatile bool g_button_double_clicked;
 extern volatile bool g_button_holded;
 
-static int HSV[] = {300 * HSV_SCALER , 100 * HSV_SCALER, 100 * HSV_SCALER};
+static int HSV[] = {360 * (DEVICE_ID % 100) * HSV_SCALER / 100 , 100 * HSV_SCALER, 100 * HSV_SCALER};
 int hsv_it = HSV_IT;
 
 nrfx_pwm_t state_led = NRFX_PWM_INSTANCE(0);
