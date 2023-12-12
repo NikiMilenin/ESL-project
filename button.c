@@ -9,10 +9,11 @@ APP_TIMER_DEF(hold_button_timer);
 
 void GPIOTEDoubleClick_EventHandler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
-    if (pin == SWITCH_BUTTON_PIN && action == NRF_GPIOTE_POLARITY_HITOLO) {
+    if (nrf_gpio_pin_read(SWITCH_BUTTON_PIN) == 0) {
         app_timer_stop(debouncing_timer);
         app_timer_start(debouncing_timer, APP_TIMER_TICKS(DEBOUNCING_DELAY), 0);
-    } 
+    }
+    app_timer_start(hold_button_timer, APP_TIMER_TICKS(HOLD_BUTTON_DEB_TIME), 0);  
 }
 
 void doubleClickTimer_EventHandler(void* ptr)
@@ -22,12 +23,19 @@ void doubleClickTimer_EventHandler(void* ptr)
 
 void debouncingTimer_EventHandler(void* p)
 {
-    
     ++clicks;
-    NRF_LOG_INFO("BUTTON PRESSED %d", clicks);
+    if (g_button_holded)
+    {
+        NRF_LOG_INFO("STOP HOLDING", clicks);
+        clicks = 0;
+        g_button_holded = 0;
+    } else if (g_button_double_clicked) {
+        g_button_double_clicked = 0;
+        clicks = 1;
+    }
     if (clicks == 2)
     {
-        NRF_LOG_INFO("BUTTON DOUBLE CKICLED");
+        NRF_LOG_INFO("BUTTON DOUBLE CLICKED");
         g_button_double_clicked = g_button_double_clicked == 1? 0 : 1;
         clicks = 0;
     }
@@ -42,15 +50,18 @@ void holdButtonTimer_EventHandler(void* ptr)
     if (nrf_gpio_pin_read(SWITCH_BUTTON_PIN) == 0) {
         NRF_LOG_INFO("BUTTON HOLDED");
         clicks = 0;
-        g_button_holded = g_button_holded == 1? 0 : 1;
+        g_button_holded = 1;
+    } else {
+        g_button_holded = 0;
     }
 }
 
 void button_init()
 {
-    //nrf_gpio_cfg_input(SWITCH_BUTTON_PIN, NRF_GPIO_PIN_PULLUP);
+    nrf_gpio_cfg_input(SWITCH_BUTTON_PIN, NRF_GPIO_PIN_PULLUP);
+
     nrfx_gpiote_init();
-    nrfx_gpiote_in_config_t config = NRFX_GPIOTE_CONFIG_IN_SENSE_HITOLO(1);
+    nrfx_gpiote_in_config_t config = NRFX_GPIOTE_CONFIG_IN_SENSE_TOGGLE(1);
     config.pull = NRF_GPIO_PIN_PULLUP;
     nrfx_gpiote_in_init(SWITCH_BUTTON_PIN, &config, GPIOTEDoubleClick_EventHandler);
     nrfx_gpiote_in_event_enable(SWITCH_BUTTON_PIN, true);

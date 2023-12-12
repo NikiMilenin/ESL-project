@@ -1,82 +1,162 @@
 #include "leds.h"
 
+extern volatile bool g_button_double_clicked;
+extern volatile bool g_button_holded;
 
-void blink(int led_id)
+static int HSV[] = {300 * HSV_SCALER , 100 * HSV_SCALER, 100 * HSV_SCALER};
+int hsv_it = HSV_IT;
+
+nrfx_pwm_t state_led = NRFX_PWM_INSTANCE(0);
+
+nrfx_pwm_t rgb_led = NRFX_PWM_INSTANCE(1);
+
+static const nrfx_pwm_config_t state_pwm_config = {
+    .output_pins = {
+        LED1_PIN,
+        NRFX_PWM_PIN_NOT_USED,
+        NRFX_PWM_PIN_NOT_USED,
+        NRFX_PWM_PIN_NOT_USED
+    },
+    .irq_priority = 7,
+    .base_clock = NRF_PWM_CLK_1MHz,
+    .count_mode = NRF_PWM_MODE_UP,
+    .top_value = PWM_STATE_TOP_VALUE,
+    .load_mode = NRF_PWM_LOAD_INDIVIDUAL,
+    .step_mode = NRF_PWM_STEP_AUTO
+};
+
+static const nrfx_pwm_config_t rgb_pwm_config = {
+    .output_pins = {
+        NRFX_PWM_PIN_NOT_USED,
+        LED2_R_PIN,
+        LED2_G_PIN,
+        LED2_B_PIN  
+    },
+    .irq_priority = 7,
+    .base_clock = NRF_PWM_CLK_1MHz,
+    .count_mode = NRF_PWM_MODE_UP,
+    .top_value = PWM_RGB_TOP_VALUE,
+    .load_mode = NRF_PWM_LOAD_INDIVIDUAL,
+    .step_mode = NRF_PWM_STEP_AUTO
+};
+
+nrf_pwm_values_individual_t seq_values = {
+    .channel_0 = 0,
+    .channel_1 = 0,
+    .channel_2 = 0,
+    .channel_3 = 0
+};
+
+int it_arr[] = {0, 50, 500, 0};
+int it;
+int mode;
+
+void PWM_state_handler(nrfx_pwm_evt_type_t event_type)
 {
-    led_invert(led_id);
-    nrf_delay_ms(SMALL_DELAY);
-    led_invert(led_id);
-    nrf_delay_ms(SMALL_DELAY); 
+    check_state();
+    seq_values.channel_0 += it;
+    if (seq_values.channel_0 == 0 || seq_values.channel_0 == PWM_STATE_TOP_VALUE) it *= -1;
 }
 
-void blink_n_times(int led_id, int n)
+void PWM_RGB_handler(nrfx_pwm_evt_type_t event_type)
 {
-    for (int j = 0; j < n; j++) {
-        blink(led_id);
+    if (g_button_holded) {
+        correct_hsv();
+        correct_rgb();
     }
-    nrf_delay_ms(BIG_DELAY);
 }
 
-void led_init(int pin_n)
+void led_init()
 {
-    nrf_gpio_cfg_output(pin_n);
-    nrf_gpio_pin_write(pin_n, 1);
+    const nrf_pwm_sequence_t sequence = {
+        .values.p_individual = &seq_values,
+        .length = NRF_PWM_VALUES_LENGTH(seq_values),
+        .repeats = 0,
+        .end_delay = 0
+    };
+    nrfx_pwm_init(&state_led, &state_pwm_config, PWM_state_handler);
+    nrfx_pwm_init(&rgb_led, &rgb_pwm_config, PWM_RGB_handler);
+    correct_rgb();
+    nrfx_pwm_simple_playback(&state_led, &sequence, 1, NRFX_PWM_FLAG_LOOP);
+    nrfx_pwm_simple_playback(&rgb_led, &sequence, 1, NRFX_PWM_FLAG_LOOP);
 }
 
-void led_invert(int pin_n)
+void check_state()
 {
-    int prev_state = nrf_gpio_pin_out_read(pin_n);
-    if (prev_state == 0)
-    {
-        nrf_gpio_pin_write(pin_n, 1);
-    }
-    else
-    {
-        nrf_gpio_pin_write(pin_n, 0);
-    }
-}
-
-void smooth_blink(int pin_n, int freq)
-{
-    nrfx_systick_init();
-
-    uint32_t period = pow(10, 6) / freq; // T = (1 / V ) * 10^6 to make it in microseconds, 
-
-    short percent = 0;
-
-    while (percent < 100)
-    {
-        percent++;
-        set_led_duty_cycle(percent, period, pin_n);
-        nrf_delay_ms(2);
-    }
-
-    while (percent > 1)
-    {
-        percent --;
-        set_led_duty_cycle(percent, period, pin_n);
-        nrf_delay_ms(2);
+    if (g_button_double_clicked) {
+        g_button_double_clicked = 0;
+        ++mode;
+        mode %= 4;
+        NRF_LOG_INFO("MODE: %d", mode);
+        hsv_it = 1;
+        if (mode == 3) {
+            seq_values.channel_0 = PWM_STATE_TOP_VALUE;
+        } else {
+            seq_values.channel_0 = 0;
+        }
+        it = it_arr[mode];
     }
 }
 
-void set_led_duty_cycle(short percent, uint32_t period, int pin_n)
+void correct_hsv()
 {
-    if (percent < 1 || percent > 100) return;
 
-    uint32_t time_on = period * percent / 100;
-    uint32_t time_off = period - time_on;
-
-    led_invert(pin_n);
-    nrfx_systick_delay_us(time_on);
-    led_invert(pin_n);
-    nrfx_systick_delay_us(time_off);
+    if (mode == 1) {
+        if (HSV[0] == 0 || HSV[0] == 360 * HSV_SCALER) hsv_it *= -1;
+        HSV[0] += hsv_it;
+    } else if (mode == 2) {
+        if (HSV[1] == 0 || HSV[1] == 100 * HSV_SCALER) hsv_it *= -1;
+        HSV[1] += hsv_it;
+    } else if (mode == 3) {
+        if (HSV[2] == 0 || HSV[2] == 100 * HSV_SCALER) hsv_it *= -1;
+        HSV[2] += hsv_it;
+    }
+    NRF_LOG_INFO("HSV: %d %d %d ", HSV[0], HSV[1], HSV[2]);
 }
 
-void smooth_blink_init()
+void correct_rgb()
 {
-    led_init(LED1_PIN);
-    led_init(LED2_R_PIN);
-    led_init(LED2_G_PIN);
-    led_init(LED2_B_PIN);
-    nrfx_systick_init();
+    int H  = HSV[0] / HSV_SCALER;
+    int S = HSV[1] / HSV_SCALER;
+    int V = HSV[2] / HSV_SCALER;
+
+    int i = (H / 60) % 6;
+    float Vm = (100 - S) * V / 100;
+    float a = (V - Vm) * (H % 60) / 60;
+    float Vi = Vm + a;
+    float Vd = V - a;
+
+    switch(i) {
+    case 0:
+        seq_values.channel_1 = V * 255 / 100 ;
+        seq_values.channel_2 = Vi * 255 / 100;
+        seq_values.channel_3 = Vm * 255 / 100;
+        break;
+    case 1:
+        seq_values.channel_1 = Vd * 255 / 100;
+        seq_values.channel_2 = V * 255 / 100;
+        seq_values.channel_3 = Vm * 255 / 100;
+        break;
+    case 2:
+        seq_values.channel_1 = Vm * 255 / 100;
+        seq_values.channel_2 = V * 255 / 100;
+        seq_values.channel_3 = Vi * 255 / 100;
+        break;
+    case 3:
+        seq_values.channel_1 = Vm * 255 / 100;
+        seq_values.channel_2 = Vd * 255 / 100;
+        seq_values.channel_3 = V * 255 / 100;
+        break;
+    case 4:
+        seq_values.channel_1 = Vi * 255 / 100;
+        seq_values.channel_2 = Vm * 255 / 100;
+        seq_values.channel_3 = V * 255 / 100;
+        break;
+    case 5:
+    default:
+        seq_values.channel_1 = V * 255 / 100;
+        seq_values.channel_2 = Vm * 255 / 100;
+        seq_values.channel_3 = Vd * 255 / 100;
+        break;
+    }
 }
