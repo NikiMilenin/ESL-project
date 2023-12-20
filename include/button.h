@@ -21,4 +21,6 @@
 
 #define SWITCH_BUTTON_PIN NRF_GPIO_PIN_MAP(1, 6)
 void button_init();
+bool button_double_clicked();
+bool button_holded();
 #endif

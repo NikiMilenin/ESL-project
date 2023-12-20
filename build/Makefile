@@ -15,6 +15,7 @@ SRC_FILES += \
   $(PROJ_DIR)/main.c \
   $(PROJ_DIR)/button.c \
   $(PROJ_DIR)/leds.c \
+  $(PROJ_DIR)/memory.c \
   $(SDK_ROOT)/modules/nrfx/mdk/gcc_startup_nrf52840.S \
   $(SDK_ROOT)/modules/nrfx/soc/nrfx_atomic.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_clock.c \
@@ -34,6 +35,7 @@ SRC_FILES += \
   $(SDK_ROOT)/components/libraries/log/src/nrf_log_backend_uart.c \
   $(SDK_ROOT)/components/libraries/log/src/nrf_log_backend_usb.c \
   $(SDK_ROOT)/components/libraries/stack_guard/nrf_stack_guard.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_nvmc.c \
   $(SDK_ROOT)/components/libraries/button/app_button.c \
   $(SDK_ROOT)/components/libraries/util/app_error.c \
   $(SDK_ROOT)/components/libraries/util/app_error_handler_gcc.c \
@@ -92,6 +94,8 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/libraries/hardfault/nrf52 \
   $(SDK_ROOT)/components/libraries/cli/uart \
   $(SDK_ROOT)/components/libraries/bsp \
+  $(SDK_ROOT)/components/libraries/bootloader \
+  $(SDK_ROOT)/components/libraries/bootloader/dfu \
   $(SDK_ROOT)/components/libraries/crypto/backend/nrf_hw \
   $(SDK_ROOT)/components/libraries/mpu \
   $(SDK_ROOT)/components/libraries/experimental_section_vars \

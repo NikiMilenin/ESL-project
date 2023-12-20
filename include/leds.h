@@ -15,6 +15,9 @@
 #include "nrfx_systick.h"
 #include "nrfx_pwm.h"
 
+#include "memory.h"
+#include "button.h"
+
 #define DEVICE_ID 6579
 
 #define SMALL_DELAY 400

@@ -1,9 +1,6 @@
 #include "leds.h"
 
-extern volatile bool g_button_double_clicked;
-extern volatile bool g_button_holded;
-
-static int HSV[] = {360 * (DEVICE_ID % 100) * HSV_SCALER / 100 , 100 * HSV_SCALER, 100 * HSV_SCALER};
+static uint32_t HSV[3];
 int hsv_it = HSV_IT;
 
 nrfx_pwm_t state_led = NRFX_PWM_INSTANCE(0);
@@ -60,7 +57,7 @@ void PWM_state_handler(nrfx_pwm_evt_type_t event_type)
 
 void PWM_RGB_handler(nrfx_pwm_evt_type_t event_type)
 {
-    if (g_button_holded) {
+    if (button_holded()) {
         correct_hsv();
         correct_rgb();
     }
@@ -76,6 +73,7 @@ void led_init()
     };
     nrfx_pwm_init(&state_led, &state_pwm_config, PWM_state_handler);
     nrfx_pwm_init(&rgb_led, &rgb_pwm_config, PWM_RGB_handler);
+    read_state(HSV);
     correct_rgb();
     nrfx_pwm_simple_playback(&state_led, &sequence, 1, NRFX_PWM_FLAG_LOOP);
     nrfx_pwm_simple_playback(&rgb_led, &sequence, 1, NRFX_PWM_FLAG_LOOP);
@@ -83,8 +81,10 @@ void led_init()
 
 void check_state()
 {
-    if (g_button_double_clicked) {
-        g_button_double_clicked = 0;
+    if (button_double_clicked()) {
+        uint32_t* ptr = get_read_ptr();
+        NRF_LOG_INFO("READED: %d", *ptr);
+        NRF_LOG_INFO("HSV: %d %d %d ", HSV[0], HSV[1], HSV[2]);
         ++mode;
         mode %= 4;
         NRF_LOG_INFO("MODE: %d", mode);
@@ -94,13 +94,17 @@ void check_state()
         } else {
             seq_values.channel_0 = 0;
         }
+        if (mode == 0) {
+            write_state(HSV);
+            read_state(HSV);
+        }
         it = it_arr[mode];
     }
 }
 
 void correct_hsv()
 {
-
+    
     if (mode == 1) {
         if (HSV[0] == 0 || HSV[0] == 360 * HSV_SCALER) hsv_it *= -1;
         HSV[0] += hsv_it;
