@@ -1,7 +1,7 @@
 #include "button.h"
 
-volatile bool g_button_double_clicked;
-volatile bool g_button_holded;
+volatile bool double_clicked;
+volatile bool holded;
 volatile int clicks;
 APP_TIMER_DEF(debouncing_timer);
 APP_TIMER_DEF(double_click_timer);
@@ -24,19 +24,19 @@ void doubleClickTimer_EventHandler(void* ptr)
 void debouncingTimer_EventHandler(void* p)
 {
     ++clicks;
-    if (g_button_holded)
+    if (holded)
     {
         NRF_LOG_INFO("STOP HOLDING", clicks);
         clicks = 0;
-        g_button_holded = 0;
-    } else if (g_button_double_clicked) {
-        g_button_double_clicked = 0;
+        holded = 0;
+    } else if (double_clicked) {
+        double_clicked = 0;
         clicks = 1;
     }
     if (clicks == 2)
     {
         NRF_LOG_INFO("BUTTON DOUBLE CLICKED");
-        g_button_double_clicked = g_button_double_clicked == 1? 0 : 1;
+        double_clicked = double_clicked == 1? 0 : 1;
         clicks = 0;
     }
     else  {
@@ -50,9 +50,9 @@ void holdButtonTimer_EventHandler(void* ptr)
     if (nrf_gpio_pin_read(SWITCH_BUTTON_PIN) == 0) {
         NRF_LOG_INFO("BUTTON HOLDED");
         clicks = 0;
-        g_button_holded = 1;
+        holded = 1;
     } else {
-        g_button_holded = 0;
+        holded = 0;
     }
 }
 
@@ -70,4 +70,18 @@ void button_init()
     app_timer_create(&debouncing_timer, APP_TIMER_MODE_SINGLE_SHOT, debouncingTimer_EventHandler);
     app_timer_create(&double_click_timer, APP_TIMER_MODE_SINGLE_SHOT, doubleClickTimer_EventHandler);
     app_timer_create(&hold_button_timer, APP_TIMER_MODE_SINGLE_SHOT, holdButtonTimer_EventHandler);
+}
+
+bool button_holded()
+{
+    return holded;
+}
+
+bool button_double_clicked()
+{
+    if (double_clicked) {
+        double_clicked = 0;
+        return true;
+    }
+    return false;
 }
