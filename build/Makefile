@@ -16,6 +16,7 @@ SRC_FILES += \
   $(PROJ_DIR)/button.c \
   $(PROJ_DIR)/leds.c \
   $(PROJ_DIR)/memory.c \
+  $(PROJ_DIR)/logic.c \
   $(SDK_ROOT)/modules/nrfx/mdk/gcc_startup_nrf52840.S \
   $(SDK_ROOT)/modules/nrfx/soc/nrfx_atomic.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_clock.c \

@@ -17,6 +17,7 @@
 
 #include "memory.h"
 #include "button.h"
+#include "logic.h"
 
 #define DEVICE_ID 6579
 
@@ -36,7 +37,7 @@
 
 void led_init();
 void check_state();
-void correct_rgb();
+void set_rgb();
 void correct_hsv();
 
 #endif

@@ -11,9 +11,9 @@ void GPIOTEDoubleClick_EventHandler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t
 {
     if (nrf_gpio_pin_read(SWITCH_BUTTON_PIN) == 0) {
         app_timer_stop(debouncing_timer);
-        app_timer_start(debouncing_timer, APP_TIMER_TICKS(DEBOUNCING_DELAY), 0);
+        app_timer_start(debouncing_timer, APP_TIMER_TICKS(DEBOUNCING_DELAY_US), 0);
     }
-    app_timer_start(hold_button_timer, APP_TIMER_TICKS(HOLD_BUTTON_DEB_TIME), 0);  
+    app_timer_start(hold_button_timer, APP_TIMER_TICKS(HOLD_BUTTON_DEB_TIME_US), 0);  
 }
 
 void doubleClickTimer_EventHandler(void* ptr)
@@ -23,26 +23,29 @@ void doubleClickTimer_EventHandler(void* ptr)
 
 void debouncingTimer_EventHandler(void* p)
 {
-    ++clicks;
-    if (holded)
-    {
-        NRF_LOG_INFO("STOP HOLDING", clicks);
-        clicks = 0;
-        holded = 0;
-    } else if (double_clicked) {
-        double_clicked = 0;
-        clicks = 1;
-    }
-    if (clicks == 2)
-    {
-        NRF_LOG_INFO("BUTTON DOUBLE CLICKED");
-        double_clicked = double_clicked == 1? 0 : 1;
-        clicks = 0;
-    }
-    else  {
-        app_timer_start(double_click_timer, APP_TIMER_TICKS(DOUBLE_CLICK_TIME), 0);
-        app_timer_start(hold_button_timer, APP_TIMER_TICKS(HOLD_BUTTON_TIME), 0);
-    }
+    
+    if (nrf_gpio_pin_read(SWITCH_BUTTON_PIN) == 0) {
+        NRF_LOG_INFO("BUTTON CLICKED", clicks);
+        ++clicks;
+        if (holded)
+        {
+            NRF_LOG_INFO("STOP HOLDING", clicks);
+            clicks = 0;
+            holded = 0;
+        } else if (double_clicked) {
+            double_clicked = 0;
+            clicks = 0;
+        } else if (clicks == 2)
+        {
+            NRF_LOG_INFO("BUTTON DOUBLE CLICKED");
+            double_clicked = double_clicked == 1? 0 : 1;
+            clicks = 0;
+        }
+        else  {
+            app_timer_start(double_click_timer, APP_TIMER_TICKS(DOUBLE_CLICK_TIME_US), 0);
+            app_timer_start(hold_button_timer, APP_TIMER_TICKS(HOLD_BUTTON_TIME_US), 0);
+        }
+    }    
 }
 
 void holdButtonTimer_EventHandler(void* ptr)

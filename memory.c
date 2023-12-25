@@ -49,31 +49,24 @@ void clear_mem()
     uint32_t * mem_start = (uint32_t *)(mem_end - mem_size);
     for (int i = 0; i < 3; i++)
     {
-        nrfx_nvmc_page_erase((uint32_t)(mem_start + i));
+        nrfx_nvmc_page_erase((uint32_t)(mem_start + i * CODE_PAGE_SIZE));
     }
 }
 
-void write_state(uint32_t* arr)
+void write_arr(uint32_t* arr, int size_of_arr)
 {
     uint32_t* ptr = get_write_ptr(arr);
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < size_of_arr; i++) {
         nrfx_nvmc_word_write((uint32_t)(ptr + i), arr[i]);
         while(!nrfx_nvmc_write_done_check()){}
     }
 } 
 
-void read_state(uint32_t* arr)
+void read_arr(uint32_t* arr, int size_of_arr)
 {
     uint32_t* ptr = get_read_ptr();
     NRF_LOG_INFO("READING %d %d %d", *ptr, *(ptr + 1), *(ptr + 2));
-
-    if (*(ptr) > 360 * HSV_SCALER || *(ptr + 1) > 100 * HSV_SCALER || *(ptr + 2) > 100 * HSV_SCALER) {
-        arr[0] = 360 * (DEVICE_ID % 100) * HSV_SCALER / 100; 
-        arr[1] = 100 * HSV_SCALER;
-        arr[2] = 100 * HSV_SCALER;
-    } else {
-        for (int i = 0; i < 3; i++) {
-            arr[i] = *(ptr + i);
-        }
-    }   
+    for (int i = 0; i < size_of_arr; i++) {
+        arr[i] = *(ptr + i);
+    }     
 }

@@ -1,4 +1,5 @@
 #include "leds.h"
+#include "logic.h"
 
 static uint32_t HSV[3];
 int hsv_it = HSV_IT;
@@ -44,9 +45,12 @@ nrf_pwm_values_individual_t seq_values = {
     .channel_3 = 0
 };
 
+
+HSV_PICKER_MODES mode = 0;
+
+
 int it_arr[] = {0, 50, 500, 0};
 int it;
-int mode;
 
 void PWM_state_handler(nrfx_pwm_evt_type_t event_type)
 {
@@ -59,7 +63,7 @@ void PWM_RGB_handler(nrfx_pwm_evt_type_t event_type)
 {
     if (button_holded()) {
         correct_hsv();
-        correct_rgb();
+        set_rgb();
     }
 }
 
@@ -74,7 +78,7 @@ void led_init()
     nrfx_pwm_init(&state_led, &state_pwm_config, PWM_state_handler);
     nrfx_pwm_init(&rgb_led, &rgb_pwm_config, PWM_RGB_handler);
     read_state(HSV);
-    correct_rgb();
+    set_rgb();
     nrfx_pwm_simple_playback(&state_led, &sequence, 1, NRFX_PWM_FLAG_LOOP);
     nrfx_pwm_simple_playback(&rgb_led, &sequence, 1, NRFX_PWM_FLAG_LOOP);
 }
@@ -82,19 +86,15 @@ void led_init()
 void check_state()
 {
     if (button_double_clicked()) {
-        uint32_t* ptr = get_read_ptr();
-        NRF_LOG_INFO("READED: %d", *ptr);
-        NRF_LOG_INFO("HSV: %d %d %d ", HSV[0], HSV[1], HSV[2]);
         ++mode;
         mode %= 4;
-        NRF_LOG_INFO("MODE: %d", mode);
         hsv_it = 1;
-        if (mode == 3) {
+        if (mode == BRIGHTNESS_PICKER_MODE) {
             seq_values.channel_0 = PWM_STATE_TOP_VALUE;
         } else {
             seq_values.channel_0 = 0;
         }
-        if (mode == 0) {
+        if (mode == STAY_MODE) {
             write_state(HSV);
             read_state(HSV);
         }
@@ -105,20 +105,19 @@ void check_state()
 void correct_hsv()
 {
     
-    if (mode == 1) {
+    if (mode == HUE_PICKER_MODE) {
         if (HSV[0] == 0 || HSV[0] == 360 * HSV_SCALER) hsv_it *= -1;
         HSV[0] += hsv_it;
-    } else if (mode == 2) {
+    } else if (mode == SATURATION_PICKER_MODE) {
         if (HSV[1] == 0 || HSV[1] == 100 * HSV_SCALER) hsv_it *= -1;
         HSV[1] += hsv_it;
-    } else if (mode == 3) {
+    } else if (mode == BRIGHTNESS_PICKER_MODE) {
         if (HSV[2] == 0 || HSV[2] == 100 * HSV_SCALER) hsv_it *= -1;
         HSV[2] += hsv_it;
     }
-    NRF_LOG_INFO("HSV: %d %d %d ", HSV[0], HSV[1], HSV[2]);
 }
 
-void correct_rgb()
+void set_rgb()
 {
     int H  = HSV[0] / HSV_SCALER;
     int S = HSV[1] / HSV_SCALER;

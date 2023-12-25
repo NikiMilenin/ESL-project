@@ -6,10 +6,8 @@
 #include "leds.h"
 #include <stdint.h>
 
-void write_state(uint32_t* arr);
-void read_state(uint32_t* arr);
-uint32_t* get_read_ptr();
-uint32_t * get_write_ptr(uint32_t* value);
+void write_arr(uint32_t*, int);
+void read_arr(uint32_t*, int);
 void clear_mem();
 
 #endif
